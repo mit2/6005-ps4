@@ -29,12 +29,16 @@ public class JottoGUI extends JFrame {
         // remember to use these objects in your GUI!
         newPuzzleButton = new JButton();
         newPuzzleButton.setName("newPuzzleButton");
+        
         newPuzzleNumber = new JTextField();
         newPuzzleNumber.setName("newPuzzleNumber");
+        
         puzzleNumber = new JLabel();
         puzzleNumber.setName("puzzleNumber");
+        
         guess = new JTextField();
         guess.setName("guess");
+        
         guessTable = new JTable();
         guessTable.setName("guessTable");
 
