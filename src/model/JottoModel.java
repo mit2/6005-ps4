@@ -21,7 +21,7 @@ public class JottoModel {
      */
     public static String makeGuess(int puzzleID, String guess) throws IOException {
         // Assertions for input params
-        // NO inline assertions here b/c on each invalid param case we must get respond from server to process it.
+        // No in-line assertions here b/c on each invalid param case we must get respond from server to process it.
         
         URL oracle = new URL("http://courses.csail.mit.edu/6.005/jotto.py?puzzle=" + puzzleID + "&guess=" + guess);
         BufferedReader in = new BufferedReader(new InputStreamReader(oracle.openStream()));
