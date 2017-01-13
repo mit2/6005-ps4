@@ -109,15 +109,20 @@ public class JottoGUI extends JFrame implements ActionListener{
         try {
             Integer num = Integer.parseInt(newPuzzleNumber.getText());
             // if input is negative int, pick random num from 0 to 10 000
-            if (num > 0 || num == 0)
+            if (num > 0 || num == 0){
                 puzzleNumber.setText("Puzzle #" + num.toString());
-            else                
+                newPuzzleNumber.setText("");
+            }
+            else{                
                 puzzleNumber.setText("Puzzle #" + randomInt.nextInt(10000) + 1);
+                newPuzzleNumber.setText("");
+            }
             
         } catch (Exception e2) {
             // TODO: handle exception
             // if no input is provided, pick random num from 0 to 10 000
-            puzzleNumber.setText("Puzzle #" + randomInt.nextInt(10000) + 1);            
+            puzzleNumber.setText("Puzzle #" + randomInt.nextInt(10000) + 1); 
+            newPuzzleNumber.setText("");
         }   
     }
 }
