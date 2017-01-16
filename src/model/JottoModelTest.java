@@ -39,8 +39,9 @@ public class JottoModelTest {
      */
     @Test
     public void testMakeGuess_Empty() {
+        JottoModel model = new JottoModel();
         try {
-            assertEquals("", JottoModel.makeGuess(0, "")); // server return error
+            assertEquals("", model.makeGuess(0, "")); // server return error
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -49,8 +50,9 @@ public class JottoModelTest {
     
     @Test
     public void testMakeGuess_ValidRequestParams() {
+        JottoModel model = new JottoModel();
         try {
-            assertEquals("guess 3 1", JottoModel.makeGuess(16952, "crazy"));
+            assertEquals("guess 3 1", model.makeGuess(16952, "crazy"));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -59,21 +61,22 @@ public class JottoModelTest {
     
     @Test
     public void testMakeGuess_inValidRequestParams() {
+        JottoModel model = new JottoModel();
         try {
-            assertEquals("", JottoModel.makeGuess(16952, "code")); // (valid-id, invalid word)
-            assertEquals("", JottoModel.makeGuess(16952, "yellow"));
+            assertEquals("", model.makeGuess(16952, "code")); // (valid-id, invalid word)
+            assertEquals("", model.makeGuess(16952, "yellow"));
             
-            assertEquals("", JottoModel.makeGuess(Integer.MIN_VALUE, "crazy"));
-            assertEquals("", JottoModel.makeGuess(Integer.MAX_VALUE + 1, "crazy"));
+            assertEquals("", model.makeGuess(Integer.MIN_VALUE, "crazy"));
+            assertEquals("", model.makeGuess(Integer.MAX_VALUE + 1, "crazy"));
             
-            assertEquals("", JottoModel.makeGuess(Integer.MIN_VALUE, "yellow"));
-            assertEquals("", JottoModel.makeGuess(Integer.MAX_VALUE, "yellow"));
+            assertEquals("", model.makeGuess(Integer.MIN_VALUE, "yellow"));
+            assertEquals("", model.makeGuess(Integer.MAX_VALUE, "yellow"));
             
-            assertEquals("", JottoModel.makeGuess(Integer.MIN_VALUE, "code"));
-            assertEquals("", JottoModel.makeGuess(Integer.MAX_VALUE, "code"));
+            assertEquals("", model.makeGuess(Integer.MIN_VALUE, "code"));
+            assertEquals("", model.makeGuess(Integer.MAX_VALUE, "code"));
             
-            assertEquals("", JottoModel.makeGuess(16952, "yessssssss")); // (valid-ID, word not in dict)
-            assertEquals("", JottoModel.makeGuess(Integer.MIN_VALUE, "yessssssss"));
+            assertEquals("", model.makeGuess(16952, "yessssssss")); // (valid-ID, word not in dict)
+            assertEquals("", model.makeGuess(Integer.MIN_VALUE, "yessssssss"));
                        
         } catch (IOException e) {
             // TODO Auto-generated catch block
