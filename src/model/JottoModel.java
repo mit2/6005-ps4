@@ -14,11 +14,19 @@ import java.util.List;
 // view querying model for updates
 
 /**
- * JottoModel represents Jotto Game current state.
+ * JottoModel represents Jotto Game database as list of string records.
  */
 public class JottoModel {
-    private String winningStatus = "notset";
-    private int puzzleID = 0; 
+    // list[0] - puzzleID
+    // list[1] - game current status
+    // list[2]...[n] - guess result received form server
+    List<String> gameDB = new ArrayList<String>();
+    public JottoModel(){
+        gameDB.add(0, "none");
+        gameDB.add(1, "notset");
+    }
+    
+   
     private List<String> guessResults = new ArrayList<String>();
     
     /**
@@ -34,16 +42,10 @@ public class JottoModel {
         
         URL oracle = new URL("http://courses.csail.mit.edu/6.005/jotto.py?puzzle=" + puzzleID + "&guess=" + guess);
         BufferedReader in = new BufferedReader(new InputStreamReader(oracle.openStream()));
-
-        String inputLine;
-        while ((inputLine = in.readLine()) != null){
-            String inResponse = inputLine.substring(0, 5);
-             if(!inResponse.equals("error")) return inputLine;
-             else System.out.println(inputLine);
-        }           
+        String inputLine = in.readLine();       
         in.close();
         
-        return "";    // if Server return error message, method will return empty string.
+        return inputLine;
     }
 
     /**
@@ -51,14 +53,14 @@ public class JottoModel {
      * @param id new pazzleID provided by client.
      */
     public void setPuzzleID(int id){
-        puzzleID = id;
+        gameDB.add(0, Integer.toString(id));
     }
     
     /**
      * @return current puzzleID.
      */
     public int getPuzzleID(){
-        return puzzleID;
+        return Integer.parseInt(gameDB.get(0));
     }
     
     /**
@@ -66,7 +68,14 @@ public class JottoModel {
      * @param guessResult returned result form server 
      */
     public void addGuess(String guessResult){
-        guessResults.add(guessResult);
+        gameDB.add(guessResult);
+    }
+    
+    /** 
+     * @return last guess result, made by client.
+     */
+    public String getGuess(){
+       return gameDB.get(gameDB.size()-1);
     }
     
     /**
@@ -74,7 +83,13 @@ public class JottoModel {
      * @param result winning result from server.
      */
     public void setWinningStatus(String result){
-        winningStatus = result;
-        System.out.println("from model "+winningStatus);
+        gameDB.add(1, result);
+    }
+    
+    /**
+     * Get winning status.
+     */
+    public String getWinningStatus(){
+        return gameDB.get(1);
     }
 }

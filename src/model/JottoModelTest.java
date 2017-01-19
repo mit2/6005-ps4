@@ -10,6 +10,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import ui.JottoGUI;
+
 public class JottoModelTest {
 
     @BeforeClass
@@ -35,13 +37,13 @@ public class JottoModelTest {
      *      guess: "", str.len == 5, > 5, > 5, str not in Dictionary
      *      puzzleID: 0, < 0, > 0
      * out:
-     *      "guess int int", "" if Server return error message, method will return empty string.
+     *      "guess int int"
      */
     @Test
     public void testMakeGuess_Empty() {
         JottoModel model = new JottoModel();
         try {
-            assertEquals("", model.makeGuess(0, "")); // server return error
+            assertEquals("error 0: Ill-formatted request.", model.makeGuess(0, "")); // server return error
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -61,27 +63,27 @@ public class JottoModelTest {
     
     @Test
     public void testMakeGuess_inValidRequestParams() {
+        // DO TESTS ACCORDENLY TO SPECS! ONLY
         JottoModel model = new JottoModel();
         try {
-            assertEquals("", model.makeGuess(16952, "code")); // (valid-id, invalid word)
-            assertEquals("", model.makeGuess(16952, "yellow"));
-            
-            assertEquals("", model.makeGuess(Integer.MIN_VALUE, "crazy"));
-            assertEquals("", model.makeGuess(Integer.MAX_VALUE + 1, "crazy"));
-            
-            assertEquals("", model.makeGuess(Integer.MIN_VALUE, "yellow"));
-            assertEquals("", model.makeGuess(Integer.MAX_VALUE, "yellow"));
-            
-            assertEquals("", model.makeGuess(Integer.MIN_VALUE, "code"));
-            assertEquals("", model.makeGuess(Integer.MAX_VALUE, "code"));
-            
-            assertEquals("", model.makeGuess(16952, "yessssssss")); // (valid-ID, word not in dict)
-            assertEquals("", model.makeGuess(Integer.MIN_VALUE, "yessssssss"));
+            assertEquals("error 2: Invalid guess. Length of guess != 5 or guess is not a dictionary word.", model.makeGuess(16952, "code")); // (valid-id, invalid word < 5)
+            assertEquals("error 2: Invalid guess. Length of guess != 5 or guess is not a dictionary word.", model.makeGuess(16952, "yellow")); // (valid-id, invalid word > 5)
+            //NOT IN SPECS assertEquals("error 1: Non-number puzzle ID.", model.makeGuess(Integer.MIN_VALUE, "yellow")); // (invalid_id < 0, invalidWord.len > 5)
+            //NOT IN SPECS assertEquals("error 1: Non-number puzzle ID.", model.makeGuess(Integer.MIN_VALUE, "crazy")); //(invalid_id < 0, validWord)
+            //NOT IN SPECS assertEquals("error 0: Ill-formatted request", model.makeGuess(Integer.MIN_VALUE, "code")); // (invalid_id < 0, invalidWord.len < 5)
+            assertEquals("error 1: Non-number puzzle ID.", model.makeGuess(Integer.MAX_VALUE + 1, "crazy")); // (invalid_id > 0, validWord)
+            assertEquals("error 2: Invalid guess. Length of guess != 5 or guess is not a dictionary word.", model.makeGuess(Integer.MAX_VALUE, "yellow")); // (invalid_id, > 0 invalidWord.len > 5)            
+            assertEquals("error 2: Invalid guess. Length of guess != 5 or guess is not a dictionary word.", model.makeGuess(Integer.MAX_VALUE, "code")); // (invalid_id > 0, invalidWord.len < 5)            
+            assertEquals("error 2: Invalid guess. Length of guess != 5 or guess is not a dictionary word.", model.makeGuess(16952, "yessssssss")); // (valid-ID, word not in dict)
+            assertEquals("error 2: Invalid guess. Length of guess != 5 or guess is not a dictionary word.", model.makeGuess(Integer.MAX_VALUE, "yessssssss")); //(invalid-ID, word not in dict)
+            assertEquals("error 0: Ill-formatted request.", model.makeGuess(16952, "")); // (valid-ID, word EMPTY)
                        
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
+    
+    
 
 }
