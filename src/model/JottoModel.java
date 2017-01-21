@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 // MVC pattern:
@@ -20,7 +21,7 @@ public class JottoModel {
     // list[0] - puzzleID
     // list[1] - game current status
     // list[2]...[n] - guess result received form server
-    List<String> gameDB = new ArrayList<String>();
+    List<String> gameDB = Collections.synchronizedList(new ArrayList<String>());
     public JottoModel(){
         gameDB.add(0, "none");
         gameDB.add(1, "notset");
@@ -52,14 +53,14 @@ public class JottoModel {
      * Set new PuzzleID.
      * @param id new pazzleID provided by client.
      */
-    public void setPuzzleID(int id){
+    public synchronized void setPuzzleID(int id){
         gameDB.add(0, Integer.toString(id));
     }
     
     /**
      * @return current puzzleID.
      */
-    public int getPuzzleID(){
+    public synchronized int getPuzzleID(){
         return Integer.parseInt(gameDB.get(0));
     }
     
@@ -67,29 +68,35 @@ public class JottoModel {
      * Adds client's guess into model's guesses list.
      * @param guessResult returned result form server 
      */
-    public void addGuess(String guessResult){
-        gameDB.add(guessResult);
+    public synchronized void addGuess(String... guessResult){
+        if(guessResult.length > 1 && Integer.parseInt(guessResult[1]) >= 0)
+            gameDB.add(Integer.parseInt(guessResult[1]), guessResult[0]);
+        else
+            gameDB.add(guessResult[0]);
     }
     
     /** 
      * @return last guess result, made by client.
      */
-    public String getGuess(){
-       return gameDB.get(gameDB.size()-1);
+    public synchronized String getGuess(int... n){
+        if(n.length > 0) return gameDB.get(n[0]);
+        else return gameDB.get(gameDB.size()-1);
     }
+    
+    
     
     /**
      * Set winning status.
      * @param result winning result from server.
      */
-    public void setWinningStatus(String result){
+    public synchronized void setWinningStatus(String result){
         gameDB.add(1, result);
     }
     
     /**
      * Get winning status.
      */
-    public String getWinningStatus(){
+    public synchronized String getWinningStatus(){
         return gameDB.get(1);
     }
 }

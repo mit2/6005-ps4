@@ -1,3 +1,8 @@
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+
+import javax.swing.SwingWorker;
+import javax.swing.table.DefaultTableModel;
 
 public class SnippetsAndHelps {
 /**
@@ -45,5 +50,49 @@ public class Events implements ActionListener {
 }
  */
 //=====================================================================================================================    
-    
+   /* processRespond(guess.getText()); // code is extracted into separated method for testing purposes, as Controller.
+    updateGUItable();
+    // run query in new background Tread
+    class RunInBackgraund extends SwingWorker<String[], Void> {                
+        @Override
+        public String[] doInBackground() {
+            System.out.println("new BGTread strated!");
+            int i = model.getCurrDBRecordIndex();
+            String res = null;
+            try {
+                res = model.makeGuess(model.getPuzzleID(), guess.getText());
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+                                
+            String[] respond = {res, Integer.toString(i)};
+            return respond;
+        }
+        
+        @Override
+        // Executed on the Event Dispatch Thread after the doInBackground method is finished.
+        public void done() {        
+            System.out.println("From Swing.invokeLater()");
+            String[] respond = null;
+            try {
+                respond = get();
+            } catch (InterruptedException | ExecutionException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            DefaultTableModel tm = (DefaultTableModel) guessTable.getModel();
+            //System.out.println(tm.getRowCount());
+            //System.out.println(respond[1]);
+            
+            String[] updateData = respond[0].split(" "); // split server respond into tokens
+            updateData[0] = model.getGuess(Integer.parseInt(respond[1])); // get data record from JottoModel DB
+            tm.insertRow(Integer.parseInt(respond[1]) - 1, updateData);
+            //update JottoModel DB record
+            String updateRecord = "";
+            for (int i = 0; i < updateData.length; i++) {
+                updateRecord += updateData[i];
+            }
+            model.addGuess(updateRecord, respond[1]);
+            updateGUItable(index);*/
 }

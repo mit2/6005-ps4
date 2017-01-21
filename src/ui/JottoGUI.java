@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
@@ -16,6 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
@@ -39,6 +41,7 @@ public class JottoGUI extends JFrame implements ActionListener{
     private final JLabel puzzleNumber;
     private final JTextField guess;
     private final JTable guessTable;
+    private int countQuery = -1;
 
     /**
      * Construct  client JottoGUI using GroupLayout.
@@ -154,16 +157,84 @@ public class JottoGUI extends JFrame implements ActionListener{
         //  If no number is provided or the input is not a positive integer, pick a random positive integer.
         if(e.getSource().equals(newPuzzleButton) || e.getSource().equals(newPuzzleNumber)){
             setPuzzleNumber(); // code is extracted into separated method for testing purposes.
-        }else if(e.getSource().equals(guess)){
-            try {
-                processRespond(model.makeGuess(model.getPuzzleID(), guess.getText())); // code is extracted into separated method for testing purposes.
-                updateGUItable();
-            } catch (IOException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }            
+        }else if(e.getSource().equals(guess)){            
+            processRespond(guess.getText() + " " + (++countQuery)); // 'guess_word i', code is extracted into separated method for testing purposes, as Controller.
+            updateGUItable();
+            // run query in new background Tread
+            class RunInBackgraund extends SwingWorker<String[], Void> {                
+                @Override
+                public String[] doInBackground() {
+                    System.out.println("new BGTread strated!");
+                    String dbrecord = model.getGuess(); // as thread has copy of program stack, i can do it safely, wrong
+                    String[] splitRecord = dbrecord.split(" ");
+                    String word = splitRecord[0];
+                    String index = splitRecord[1];
+                    System.out.println("INDEX :" + index);
+                    String res = null;
+                    System.out.println("getpuzid: " + model.getPuzzleID() + " "+ word);
+                    try {
+                        res = model.makeGuess(model.getPuzzleID(), word);
+                        System.out.println("Respond server " + word +res);
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                                        
+                    String[] respond = {res, index,  word};
+                    return respond;
+                }
+                
+                @Override
+                // Executed on the Event Dispatch Thread after the doInBackground method is finished.
+                public void done() {        
+                    System.out.println("From Swing.invokeLater()");
+                    String[] respond = null;
+                    try {
+                        respond = get();
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    // prepare to update record
+                    String[] updateData = null;
+                    if(respond[0].contains("error")){
+                        updateData = new String[]{respond[2], respond[0].substring(7), ""};
+                    }else if(respond[0].contains("guess 5 5")){
+                        updateData = new String[]{respond[2], "--// You win!  :)---//----//----//---", "---//----//------//----//---//----//--"};
+                    }
+                    else{
+                        updateData = respond[0].split(" "); // split server respond into tokens
+                        updateData[0] = respond[2]; // replace 'guess' with actual word     
+                    }
+                                   
+                    // search tm for guess word & update it                    
+                    DefaultTableModel tm = (DefaultTableModel) guessTable.getModel();
+                    int k = tm.getRowCount();
+                    for (int i = 0; i < k; i++) {
+                        System.out.println("data form table :"+tm.getValueAt(i, 0));
+                        if(tm.getValueAt(i, 0).equals(updateData[0])){
+                            tm.removeRow(i);
+                            tm.insertRow(i, updateData);
+                        }                            
+                    }
+  
+                    //update JottoModel DB record
+                    String updateRecord = "";
+                    for (int i = 0; i < updateData.length; i++) {
+                        updateRecord += updateData[i];
+                    }
+                    int i = Integer.parseInt(respond[1]) + 2; // make index valid in DB position, as 0, 1 pos in DB reserved not for records.
+                    model.addGuess(updateRecord, Integer.toString(i) );        
         }        
-    }
+     }
+            RunInBackgraund fib = new RunInBackgraund();
+            fib.execute(); // run Worker thread
+   }
+ }
+  
     
 
     /**
@@ -225,6 +296,7 @@ public class JottoGUI extends JFrame implements ActionListener{
     private void updateGUItable(){
         DefaultTableModel tm = (DefaultTableModel) guessTable.getModel();
         // get respond from JottoModel, split it in array of strings
+        // this setup is not multithreaded case
         if(model.getGuess().length() == 9){
             // print out winning guess message
             String[] data = model.getGuess().split(" ");
@@ -234,12 +306,18 @@ public class JottoGUI extends JFrame implements ActionListener{
                data[2] = "---//----//------//----//---//----//--";                
             }          
             guess.setText("");
-            tm.insertRow(1, data);
-        }else{
+            tm.addRow(data);
+        }else if(model.getGuess().contains("error")){
             // print out error message 
             String[] data = {guess.getText(), model.getGuess(), ""};
             guess.setText("");
-            tm.insertRow(1, data);
+            tm.addRow(data);
+        }
+        else{
+            // add just guessing word
+            String[] data = {guess.getText(), "", ""};
+            guess.setText("");
+            tm.addRow(data);
         }
         
         guessTable.repaint();
