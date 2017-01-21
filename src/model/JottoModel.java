@@ -21,15 +21,14 @@ public class JottoModel {
     // list[0] - puzzleID
     // list[1] - game current status
     // list[2]...[n] - guess result received form server
+    
+    // Jotto queries DataBase. Tread-safe ADT.
     List<String> gameDB = Collections.synchronizedList(new ArrayList<String>());
     public JottoModel(){
         gameDB.add(0, "none");
         gameDB.add(1, "notset");
     }
-    
-   
-    private List<String> guessResults = new ArrayList<String>();
-    
+
     /**
      * Send a client guess to Server and read back the reply.
      * @param guess a trial guessing word
@@ -76,7 +75,7 @@ public class JottoModel {
     }
     
     /** 
-     * @return last guess result, made by client.
+     * @return  guess result made by client from Jotto Game DB.
      */
     public synchronized String getGuess(int... n){
         if(n.length > 0) return gameDB.get(n[0]);
@@ -86,7 +85,7 @@ public class JottoModel {
     
     
     /**
-     * Set winning status.
+     * Set Jotto Game winning status.
      * @param result winning result from server.
      */
     public synchronized void setWinningStatus(String result){
@@ -94,7 +93,7 @@ public class JottoModel {
     }
     
     /**
-     * Get winning status.
+     * Get Jotto Game winning status.
      */
     public synchronized String getWinningStatus(){
         return gameDB.get(1);

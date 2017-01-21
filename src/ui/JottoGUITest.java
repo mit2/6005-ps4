@@ -45,11 +45,6 @@ public class JottoGUITest {
         JottoGUI gui = new JottoGUI();
         JottoModel model = (JottoModel) gui.test("getJottoModel");
         
-        /*model.addGuess("guess 5 5");
-        gui.test(updateGUITable);
-        gui.test(clearGUItable);
-        gui.test("getDefaultTableModel");*/
-        
         // setPuzzleNumber()
         assertEquals(23, gui.test("setNewPuzzleNumber_23"));
         assertTrue((int)gui.test("setNewPuzzleNumber_-1") > 0);

@@ -4,8 +4,6 @@ import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -20,8 +18,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-
 import model.JottoModel;
 
 /**
@@ -35,7 +31,7 @@ public class JottoGUI extends JFrame implements ActionListener{
     
     // Init JottoModel.
     private final JottoModel model = new JottoModel();
-    // Queue for queries to processed one-by-one by treads. Thread-safe ADT.
+    // Queue for queries to processed one-by-one by threads. Thread-safe ADT.
     private LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<String>();
 
     // Components to use in the GUI
@@ -93,7 +89,7 @@ public class JottoGUI extends JFrame implements ActionListener{
         guess.addActionListener(this); // finish this listener...
         
         // TODO Problems 2, 3, 4, and 5
-        // Set JComponets into GroupLayout        
+        // Set top panel JComponets into GroupLayout        
         layout.setHorizontalGroup(
                 layout.createSequentialGroup()
                    .addComponent(puzzleNumber)
@@ -161,27 +157,29 @@ public class JottoGUI extends JFrame implements ActionListener{
         if(e.getSource().equals(newPuzzleButton) || e.getSource().equals(newPuzzleNumber)){
             setPuzzleNumber(); // code is extracted into separated method for testing purposes.
         }else if(e.getSource().equals(guess)){            
-            processRespond(guess.getText() + " " + (++countQuery)); // 'guess_word i', code is extracted into separated method for testing purposes, as Controller.
+            processRespond(guess.getText() + " " + (++countQuery)); // 'guess i', code is extracted into separated method for testing purposes, as Controller.
             updateGUItable();
             /**
              *  Run query in new background Tread
-             *  each new Tread starting will grab head query in 'queue' as string:  guess + index,
-             *  will process this query and update GUI table by 'guess' using linear search & update Jotto db list using guess 'index' 
+             *  each new Tread starting, will grab head query in 'queue' represented as a string:  guess + index,
+             *  will process this query and update:
+             *  - GUI table by 'guess' using linear search.
+             *  - update Jotto db list using guess 'index'.
              * @author win8
              *
              */
             class RunInBackgraund extends SwingWorker<String[], Void> {                
                 @Override
                 public String[] doInBackground() {
-                    System.out.println("new BGTread strated!");
-                    String dbrecord = null;
+                    System.out.println("new BackGrTread strated!");
+                    String record = null;
                     try {
-                        dbrecord = queue.take();
+                        record = queue.take();
                     } catch (InterruptedException e1) {
                         // TODO Auto-generated catch block
                         e1.printStackTrace();
-                    } // as thread has copy of program stack, i can do it safely, wrong
-                    String[] splitRecord = dbrecord.split(" ");
+                    }
+                    String[] splitRecord = record.split(" ");
                     String word = splitRecord[0];
                     String index = splitRecord[1];
                     System.out.println("INDEX :" + index);
@@ -189,7 +187,7 @@ public class JottoGUI extends JFrame implements ActionListener{
                     System.out.println("getpuzid: " + model.getPuzzleID() + " "+ word);
                     try {
                         res = model.makeGuess(model.getPuzzleID(), word);
-                        System.out.println("Respond server " + word +res);
+                        System.out.println("Respond server " + word + res);
                     } catch (IOException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
@@ -218,7 +216,9 @@ public class JottoGUI extends JFrame implements ActionListener{
                     if(respond[0].contains("error")){
                         updateData = new String[]{respond[2], respond[0].substring(8), ""};
                     }else if(respond[0].contains("guess 5 5")){
-                        updateData = new String[]{respond[2], "--// You win!  :)---//----//----//---", "---//----//------//----//---//----//--"};
+                        updateData = new String[]{respond[2], "**** You win!  :)*************************", "******************************************"};
+                        model.setWinningStatus(respond[0].replaceFirst("guess", respond[2]));
+                        System.out.println(model.getWinningStatus());
                     }
                     else{
                         updateData = respond[0].split(" "); // split server respond into tokens
@@ -264,6 +264,7 @@ public class JottoGUI extends JFrame implements ActionListener{
         try {
             Integer num = Integer.parseInt(newPuzzleNumber.getText());           
             if (num > 0 || num == 0){
+                // if input is correct
                 model.setPuzzleID(num);
                 puzzleNumber.setText("Puzzle #" + model.getPuzzleID());
                 newPuzzleNumber.setText("");
@@ -298,6 +299,7 @@ public class JottoGUI extends JFrame implements ActionListener{
             queue.add(guessing); // queue used by treads to take one query to process.
             // print “You win! The secret word was [secret word]!” when the user guesses the word correctly, i.e. the server responds with “guess 5 5.”                        
             if(guessing.equals("guess 5 5")){
+                // this code is used in NOT multithreaded version
                 model.setWinningStatus(guessing);
                 System.out.println("You win! The secret word was [" + guessing + "]!");
             }
@@ -312,7 +314,7 @@ public class JottoGUI extends JFrame implements ActionListener{
     private void updateGUItable(){
         DefaultTableModel tm = (DefaultTableModel) guessTable.getModel();
         // get respond from JottoModel, split it in array of strings
-        // THIS CODE SETUP IS NOT FOR MULTITREADED CASE, ONLY USED TO PLACE GUESS WORD WITH OUT RESULTS (!)
+        // THIS CODE SETUP IS NOT FOR MULTITREADED CASE, ONLY USED TO PLACE GUESS WORD WITHOUT RESULTS (!)
         // AFTER ADDING MULTITHREAD SUPPORT USED ONLY LAST IF CASE.
         if(model.getGuess().length() == 9){
             // print out winning guess message
@@ -360,6 +362,15 @@ public class JottoGUI extends JFrame implements ActionListener{
     public Object test(String... var){
         if(var[0] == "getJottoModel"){
             return this.model;
+        }
+        
+        if(var[0].equals("getGuessText")){
+            return guess.getText();
+        }
+      
+        if(var[0] == "clearGUItable"){ // reference equality is also good in this case as param point to the same obj
+            clearGUItable();
+            return null;
         }
         
         
@@ -413,22 +424,6 @@ public class JottoGUI extends JFrame implements ActionListener{
             updateGUItable();
             return (DefaultTableModel) guessTable.getModel();
         }
-        
-        
-        
-        if(var[0].equals("getGuessText")){
-            return guess.getText();
-        }
-        
-   
-        
-        
-        if(var[0] == "clearGUItable"){ // reference equality is also good in this case as param point to the same obj
-            clearGUItable();
-            return null;
-        }
-        
-       
         
         return null;
     }
