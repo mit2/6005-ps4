@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
@@ -32,8 +33,10 @@ public class JottoGUI extends JFrame implements ActionListener{
 
     private static final long serialVersionUID = 1L; // required by Serializable
     
-    // Init JottoModel here, to avoid two treads running (main & event dispatch tread).
+    // Init JottoModel.
     private final JottoModel model = new JottoModel();
+    // Queue for queries to processed one-by-one by treads. Thread-safe ADT.
+    private LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<String>();
 
     // Components to use in the GUI
     private final JButton newPuzzleButton;
@@ -160,12 +163,24 @@ public class JottoGUI extends JFrame implements ActionListener{
         }else if(e.getSource().equals(guess)){            
             processRespond(guess.getText() + " " + (++countQuery)); // 'guess_word i', code is extracted into separated method for testing purposes, as Controller.
             updateGUItable();
-            // run query in new background Tread
+            /**
+             *  Run query in new background Tread
+             *  each new Tread starting will grab head query in 'queue' as string:  guess + index,
+             *  will process this query and update GUI table by 'guess' using linear search & update Jotto db list using guess 'index' 
+             * @author win8
+             *
+             */
             class RunInBackgraund extends SwingWorker<String[], Void> {                
                 @Override
                 public String[] doInBackground() {
                     System.out.println("new BGTread strated!");
-                    String dbrecord = model.getGuess(); // as thread has copy of program stack, i can do it safely, wrong
+                    String dbrecord = null;
+                    try {
+                        dbrecord = queue.take();
+                    } catch (InterruptedException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    } // as thread has copy of program stack, i can do it safely, wrong
                     String[] splitRecord = dbrecord.split(" ");
                     String word = splitRecord[0];
                     String index = splitRecord[1];
@@ -201,7 +216,7 @@ public class JottoGUI extends JFrame implements ActionListener{
                     // prepare to update record
                     String[] updateData = null;
                     if(respond[0].contains("error")){
-                        updateData = new String[]{respond[2], respond[0].substring(7), ""};
+                        updateData = new String[]{respond[2], respond[0].substring(8), ""};
                     }else if(respond[0].contains("guess 5 5")){
                         updateData = new String[]{respond[2], "--// You win!  :)---//----//----//---", "---//----//------//----//---//----//--"};
                     }
@@ -280,6 +295,7 @@ public class JottoGUI extends JFrame implements ActionListener{
      */
     private void processRespond(String guessing){
             model.addGuess(guessing);
+            queue.add(guessing); // queue used by treads to take one query to process.
             // print “You win! The secret word was [secret word]!” when the user guesses the word correctly, i.e. the server responds with “guess 5 5.”                        
             if(guessing.equals("guess 5 5")){
                 model.setWinningStatus(guessing);
@@ -296,7 +312,8 @@ public class JottoGUI extends JFrame implements ActionListener{
     private void updateGUItable(){
         DefaultTableModel tm = (DefaultTableModel) guessTable.getModel();
         // get respond from JottoModel, split it in array of strings
-        // this setup is not multithreaded case
+        // THIS CODE SETUP IS NOT FOR MULTITREADED CASE, ONLY USED TO PLACE GUESS WORD WITH OUT RESULTS (!)
+        // AFTER ADDING MULTITHREAD SUPPORT USED ONLY LAST IF CASE.
         if(model.getGuess().length() == 9){
             // print out winning guess message
             String[] data = model.getGuess().split(" ");
@@ -314,7 +331,7 @@ public class JottoGUI extends JFrame implements ActionListener{
             tm.addRow(data);
         }
         else{
-            // add just guessing word
+            // add just guessing word (!)
             String[] data = {guess.getText(), "", ""};
             guess.setText("");
             tm.addRow(data);
