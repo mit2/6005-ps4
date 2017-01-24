@@ -24,6 +24,20 @@ public class JottoModel {
     
     // Jotto queries DataBase. Tread-safe ADT.
     List<String> gameDB = Collections.synchronizedList(new ArrayList<String>());
+    
+ // Rep invariant
+    // query.length > 0
+    
+    // Abstraction function
+    // represents a list of queries as string characters.
+    
+    // Thread safety argument for ADT:
+    // --------------------------------------------------
+    //    This class is threadsafe because it has following:  
+    //    1) Thread safety argument with synchronization:  
+    //    - all accesses to 'gameDB' happen within JottoModel methods,
+    //      which are all guarded by JottModel'S lock
+    //    - 'gameDB' points to mutable  tread-sage synchronized by design ArrayList Collection.
     public JottoModel(){
         gameDB.add(0, "none");
         gameDB.add(1, "notset");

@@ -13,7 +13,32 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import model.JottoModel;
+/**
+ * Notes on testing
 
+You are not expected to implement automated GUI testing for this problem set (imagine a software robot that
+ simulates mousing and typing,
+ and examines the Jotto window for expected changes).
+
+Instead, be sure to thoroughly document your manual testing strategy for the GUI. You must document all the 
+steps that you took to manually test your implementation: Which actions did you test? In what order(s) did you 
+test these actions? With what inputs and expected outputs?
+
+Make use of guesses that include a ‘*’ to test the multithreaded nature of your client. Your GUI should remain 
+responsive during this delay.
+
+For testing purposes, the following are several puzzle numbers with their corresponding secret words:
+
+    16952 corresponds to “cargo”,
+    2015 corresponds to “rucks”,
+    5555 corresponds to “vapid”,
+    8888 corresponds to “rased”.
+
+For your model and other components that can be tested without GUI automation, use JUnit. A well-designed
+ solution will maximize the amount of code that can be tested with automation.
+ * @author win8
+ *
+ */
 public class JottoGUITest {
 
     @BeforeClass
